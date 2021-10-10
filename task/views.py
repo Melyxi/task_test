@@ -4,7 +4,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -16,6 +16,7 @@ from task.serializers import TaskSerializer, UserSerializer
 class TaskView(ModelViewSet):
     queryset = Tasks.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated, ]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -38,10 +39,11 @@ class TaskView(ModelViewSet):
         else:
             return Response({"error": "Нет доступа"})
 
+
 class UserView(ModelViewSet):
     queryset = MyUserModel.objects.all()
     serializer_class = UserSerializer
-
+    permission_classes = [IsAuthenticated, ]
 
 class AuthView(CreateAPIView):
     permission_classes = [AllowAny, ]
@@ -50,6 +52,8 @@ class AuthView(CreateAPIView):
 
 
 class TasksUser(APIView, LimitOffsetPagination):
+    permission_classes = [IsAuthenticated, ]
+
     def get(self, request, **kwargs):
         if kwargs['user_id'] == request.user.id:
             data = Tasks.objects.filter(users__in=[kwargs['user_id']])
@@ -58,4 +62,3 @@ class TasksUser(APIView, LimitOffsetPagination):
             return self.get_paginated_response(tasks.data)
         else:
             return Response({'error': "Доступ запрещен"}, status=403)
-
